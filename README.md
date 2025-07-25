@@ -9,7 +9,7 @@ cd gitlab-cicd
 # Salvar o docker-compose.yml (copie o conteúdo do primeiro artifact)
 nano docker-compose.yml
 
-``` sh
+
 # Salvar o script de setup (copie o conteúdo do segundo artifact)
 nano setup-gitlab.sh
 
@@ -23,7 +23,7 @@ bashchmod +x setup-gitlab.sh
 chmod +x configure-runner.sh
 
 3. Executar o Setup Inicial
-``` sh
+
 # Executar o script principal
 ./setup-gitlab.sh
 ```
