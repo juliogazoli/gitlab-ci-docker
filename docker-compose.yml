@@ -1,0 +1,101 @@
+version: '3.8'
+
+services:
+  gitlab:
+    image: gitlab/gitlab-ce:latest
+    container_name: gitlab
+    restart: always
+    hostname: gitlab.local
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://gitlab.local'
+        gitlab_rails['gitlab_shell_ssh_port'] = 2224
+        # Configurações de email (opcional)
+        # gitlab_rails['smtp_enable'] = true
+        # gitlab_rails['smtp_address'] = "smtp.gmail.com"
+        # gitlab_rails['smtp_port'] = 587
+        # gitlab_rails['smtp_user_name'] = "your-email@gmail.com"
+        # gitlab_rails['smtp_password'] = "your-password"
+        # gitlab_rails['smtp_domain'] = "smtp.gmail.com"
+        # gitlab_rails['smtp_authentication'] = "login"
+        # gitlab_rails['smtp_enable_starttls_auto'] = true
+        # gitlab_rails['smtp_tls'] = false
+        
+        # Configurações de performance
+        postgresql['shared_buffers'] = "256MB"
+        postgresql['max_connections'] = 200
+        unicorn['worker_processes'] = 2
+        sidekiq['max_concurrency'] = 25
+    ports:
+      - '80:80'
+      - '443:443'
+      - '2224:22'
+    volumes:
+      - gitlab_config:/etc/gitlab
+      - gitlab_logs:/var/log/gitlab
+      - gitlab_data:/var/opt/gitlab
+    shm_size: '256m'
+    networks:
+      - gitlab-network
+
+  gitlab-runner:
+    image: gitlab/gitlab-runner:latest
+    container_name: gitlab-runner
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - gitlab_runner_config:/etc/gitlab-runner
+    networks:
+      - gitlab-network
+    depends_on:
+      - gitlab
+
+#  # Redis para cache (opcional, GitLab já tem um interno)
+#  redis:
+#    image: redis:6.2-alpine
+#    container_name: gitlab-redis
+#    restart: always
+#    command: redis-server --appendonly yes
+#    volumes:
+#      - gitlab_redis_data:/data
+#    networks:
+#      - gitlab-network
+
+  # PostgreSQL externo (opcional, GitLab já tem um interno)
+  # postgres:
+  #   image: postgres:13
+  #   container_name: gitlab-postgres
+  #   restart: always
+  #   environment:
+  #     POSTGRES_DB: gitlabhq_production
+  #     POSTGRES_USER: gitlab
+  #     POSTGRES_PASSWORD: gitlab_password
+  #   volumes:
+  #     - gitlab_postgres_data:/var/lib/postgresql/data
+  #   networks:
+  #     - gitlab-network
+
+#  # Registry do Docker (opcional)
+#  registry:
+#    image: registry:2
+#    container_name: gitlab-registry
+#    restart: always
+#    ports:
+#      - '5000:5000'
+#    volumes:
+#      - gitlab_registry_data:/var/lib/registry
+#    networks:
+#      - gitlab-network
+
+volumes:
+  gitlab_config:
+  gitlab_logs:
+  gitlab_data:
+  gitlab_runner_config:
+#  gitlab_redis_data:
+#  gitlab_registry_data:
+#  # gitlab_postgres_data:
+
+networks:
+  gitlab-network:
+    driver: bridge
